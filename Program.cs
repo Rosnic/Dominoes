@@ -1,119 +1,56 @@
-﻿using System;
-using System.Linq;
-using Microsoft.VisualBasic;
-
-namespace Dominoes
+﻿namespace BetterDomino
 {
     class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            List<int[]> stonesInOrder = new List<int[]>();
-            
-            int[][] stones =
+            Console.WriteLine(Domino.Chain(new[]
             {
-                new [] {1, 6},
-                new [] {2, 3},
-                new [] {5, 6},
-                new [] {2, 4},
-                new [] {2, 4},
-                new [] {1, 5},
-                new [] {3, 1},
-                new [] {6, 4},
-                new [] {2, 5},
-                new [] {3, 1},
-                new [] {3, 2},
-                new [] {1, 4},
-                new [] {6, 2}
-            };
+                (2, 2), (1, 3), (3, 2), (3, 1), (2, 1), (1, 3),
+            }));
+        }
+    }
+    public class Domino
+    {
+        public static bool Chain(IEnumerable<(int, int)> dominoes) => TryChain(dominoes.ToList(), (0, 0));
 
-            for (int i = 0; i < stones.Length; i++)
-            {
-                //if (!AllStonesUsed(stones, stonesInOrder) /*|| stonesInOrder.First().First() != stonesInOrder.Last().Last()*/)
-                {
-                    stonesInOrder.Clear();
-                    stonesInOrder.Add(stones[i]);
-                    TurnAndCheck(stones, stonesInOrder);
-                    ContinuousCheck(stones, stonesInOrder);
-                    WriteOrder(stones, stonesInOrder);
-                }
-            }
-        }
+        public static bool TryChain(List<(int, int)> dominoes, (int first, int last) ends)
+        {
+            if (dominoes.Count == 0 && ends.last == ends.first) return true;
 
-        #region Are All Stones Used
-        
-        public static bool AllStonesUsed(int[][] stones, List<int[]> stonesInOrder)
-        {
-            for (int i = 0; i < stones.Length; i++)
-            {
-                if (!stonesInOrder.Contains(stones[i]))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-        
-        #endregion
+            var copyEnd = ends;
 
-        #region Continuous Checks
-        
-        public static void ContinuousCheck(int[][] stones, List<int[]> stonesInOrder)
-        {
-            for (int i = 0; i < stones.Length; i++)
+            for (int i = 0; i < dominoes.Count; i++)
             {
-                if (!stonesInOrder.Contains(stones[i]))
-                {
-                    TurnAndCheck(stones, stonesInOrder);
-                }
-            }
-        }
-        #endregion
-        
-        #region Turning, checking and placing
-        
-        public static void TurnAndCheck(int[][] stones, List<int []> stonesInOrder)
-        {
-            for (int i = 0; i < stones.Length; i++)
-            {
-                if (stones[i][0] == stonesInOrder.Last().Last() && !stonesInOrder.Contains(stones[i])) 
-                {
-                    stonesInOrder.Add(stones[i]);
-                }
-                else if (stones[i][1] == stonesInOrder.Last().Last() && !stonesInOrder.Contains(stones[i]))
-                {
-                    Array.Reverse(stones[i]);
-                    stonesInOrder.Add(stones[i]);
-                }
-                else if (stones[i][0] == stonesInOrder.First().First() && !stonesInOrder.Contains(stones[i]))
-                {
-                    Array.Reverse(stones[i]);
-                    stonesInOrder.Insert(0, stones[i]);
-                }
-                else if (stones[i][1] == stonesInOrder.First().First() && !stonesInOrder.Contains(stones[i]))
-                {
-                    stonesInOrder.Insert(0, stones[i]);
-                }
-            }
-        }
-        #endregion
+                var (a, b) = dominoes[i];
 
-        #region Writing out the order
-        public static void WriteOrder(int[][] stones, List<int[]> stonesInOrder)
-        {
-            if (AllStonesUsed(stones, stonesInOrder))
-            {
-                foreach (var stone in stonesInOrder)
+                if (ends.last == 0)
                 {
-                    Console.Write("-");
-                    foreach (var num in stone)
-                    {
-                        Console.Write(num);
-                    }
+                    ends = (a, b);
                 }
-                Console.WriteLine();
+                else if (ends.last == a)
+                {
+                    ends.last = b;
+                }
+                else if (ends.last == b)
+                {
+                    ends.last = a;
+                }
+                else
+                {
+                    continue;
+                }
+
+                var dominoesCopy = new List<(int, int)>(dominoes);
+
+                dominoesCopy.RemoveAt(i);
+
+                if (TryChain(dominoesCopy, ends)) return true;
+                {
+                    ends = copyEnd;
+                }
             }
+            return false;
         }
-        #endregion
     }
 }
